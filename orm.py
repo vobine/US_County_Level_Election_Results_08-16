@@ -1,8 +1,8 @@
 #! /usr/bin/env python3
 
-from sqlalchemy import Boolean, Column, Enum, Integer, Sequence, String
+from sqlalchemy import Boolean, Column, Enum, ForeignKey, Integer, Sequence, String
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, relationship
 from sqlalchemy.ext.declarative import declarative_base
 
 import argparse
@@ -23,11 +23,13 @@ class County(Base):
 class Census(Base):
     __tablename__ = 'census'
 
-    id = id = Column(Integer, Sequence('census_id_seq'), primary_key=True);
-    fips = Column(Integer, nullable=False)
+    id = id = Column(Integer, Sequence('census_id_seq'), primary_key=True)
+    fips_id = Column(Integer, ForeignKey('county.fips'), nullable=False)
+    fips = relationship('County', back_populates='population')
     year = Column(Integer, nullable=False)
     population = Column(Integer)
     estimated = Column(Boolean)
+County.population = relationship('Census', back_populates='fips')
 
 class Party(enum.Enum):
     other = 0
@@ -39,10 +41,12 @@ class Election(Base):
     __tablename__ = 'election'
 
     id = Column(Integer, Sequence('election_seq'), primary_key=True)
-    fips = Column(Integer, nullable=False)
+    fips_id = Column(Integer, ForeignKey('county.fips'))
+    fips = relationship('County', back_populates='elections')
     year = Column(Integer, nullable=False)
     votes = Column(Integer)
     party = Column(Enum(Party))
+County.elections = relationship('Election', back_populates='fips')
 
 ################################################################
 #### Defaults and constants
@@ -82,15 +86,15 @@ class Elections:
 
                 self.session.add(County(fips=fips, name=row[2]))
 
-                self.session.add(Census(fips=int(row[1]),
+                self.session.add(Census(fips_id=int(row[1]),
                                         year=2010,
                                         population=int(row[3]),
                                         estimated=False))
-                self.session.add(Census(fips=int(row[1]),
+                self.session.add(Census(fips_id=int(row[1]),
                                         year=2012,
                                         population=int(row[7]),
                                         estimated=True))
-                self.session.add(Census(fips=int(row[1]),
+                self.session.add(Census(fips_id=int(row[1]),
                                         year=2016,
                                         population=int(row[11]),
                                         estimated=True))
@@ -109,7 +113,7 @@ class Elections:
                                                       Party.dem,
                                                       Party.gop,
                                                       Party.other)):
-                        self.session.add(Election(fips=fips,
+                        self.session.add(Election(fips_id=fips,
                                                   year=year,
                                                   votes=int(row[offset+column]),
                                                   party=party))

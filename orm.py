@@ -52,6 +52,8 @@ County.elections = relationship('Election', back_populates='fips')
 #### Defaults and constants
 
 DEFAULT_URL = 'sqlite:///:memory:'
+DEFAULT_CENSUS = 'PEP_2018_PEPANNRES_with_ann.csv'
+DEFAULT_ELECTIONS = 'US_County_Level_Presidential_Results_08-16.csv'
 
 ################################################################
 #### The working class
@@ -72,7 +74,7 @@ class Elections:
     ################################################################
     #### CSV management
 
-    def load_pop(self, popfile):
+    def load_pop(self, popfile=DEFAULT_CENSUS):
         with open(popfile, 'rt') as pf:
             # Two redundant header lines
             head = next (csv.reader(pf))
@@ -100,7 +102,7 @@ class Elections:
                                         estimated=True))
         self.session.commit()
 
-    def load_votes(self, votefile):
+    def load_votes(self, votefile=DEFAULT_ELECTIONS):
         with open(votefile, 'rt') as vf:
             head = next (csv.reader(vf))
 
@@ -124,7 +126,20 @@ class Elections:
 #### CLI
 
 def main():
-    pass
+    parser = argparse.ArgumentParser(description='US census + presidential elections')
+    parser.add_argument('-s', '--sql', default=DEFAULT_URL)
+    parser.add_argument('-c', '--census', default=None)
+    parser.add_argument('-e', '--election', default=None)
+
+    args = parser.parse_args()
+
+    orm = Elections(args.sql)
+    orm.define_tables()
+
+    if args.census:
+        orm.load_pop(args.census)
+    if args.election:
+        orm.load_votes(args.election)
 
 if __name__ == '__main__':
     main()

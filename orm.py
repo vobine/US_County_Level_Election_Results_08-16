@@ -31,6 +31,7 @@ class Census(Base):
     estimated = Column(Boolean)
 County.population = relationship('Census', back_populates='fips')
 
+@enum.unique
 class Party(enum.Enum):
     other = 0
     gop = 1

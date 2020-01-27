@@ -20,6 +20,10 @@ class County(Base):
     fips = Column(Integer, primary_key=True)
     name = Column(String(100))
 
+    def __repr__(self):
+        return '<County(fips={0:d}, name="{1:s}">'.format(
+            self.fips, self.name)
+
 class Census(Base):
     __tablename__ = 'census'
 
@@ -29,6 +33,11 @@ class Census(Base):
     year = Column(Integer, nullable=False)
     population = Column(Integer)
     estimated = Column(Boolean)
+
+    def __repr__(self):
+        return '<Census(fips={0:d}, year={1:d}, population={2:d})>'.format(
+            self.fips_id, self.year, self.population)
+
 County.population = relationship('Census', back_populates='fips')
 
 @enum.unique
@@ -45,8 +54,17 @@ class Election(Base):
     fips_id = Column(Integer, ForeignKey('county.fips'))
     fips = relationship('County', back_populates='elections')
     year = Column(Integer, nullable=False)
-    votes = Column(Integer)
     party = Column(Enum(Party))
+    votes = Column(Integer)
+
+    def __repr__(self):
+        return '<Election(fips={0:d}, year={1:d}, party={2:s}, votes={3:d})>'.format(
+            self.fips_id, self.year, Party(self.party).name, self.votes)
+
+    def __str__(self):
+        return 'Election {0:d}, {1:s}: {2:s} {3:d}'.format(
+            self.year, self.fips.name, Party(self.party).name, self.votes)
+
 County.elections = relationship('Election', back_populates='fips')
 
 ################################################################

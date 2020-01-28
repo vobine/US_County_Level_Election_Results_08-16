@@ -140,6 +140,13 @@ class Elections:
                                                   party=party))
         self.session.commit()
 
+    ################################################################
+    #### Basic queries
+
+    def query(self):
+        return self.session.query(Census, Election) \
+            .filter(Census.year == Election.year) \
+            .filter(Census.fips_id == Election.fips_id)
 
 ################################################################
 #### CLI
